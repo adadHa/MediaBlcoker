@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280">
+  <!-- Background -->
+  <rect width="440" height="280" fill="#4a90e2" />
+  
+  <!-- Stylized blurred image frame -->
+  <rect x="40" y="40" width="200" height="200" rx="10" fill="#ffffff" opacity="0.2" />
+  <rect x="40" y="40" width="200" height="200" rx="10" fill="none" stroke="#ffffff" stroke-width="4" />
+  
+  <!-- Lock icon -->
+  <circle cx="140" cy="140" r="50" fill="#ffffff" />
+  <rect x="115" y="120" width="50" height="60" rx="5" fill="#4a90e2" />
+  <circle cx="140" cy="145" r="8" fill="#ffffff" />
+  <rect x="136" y="145" width="8" height="25" fill="#ffffff" />
+  
+  <!-- Text -->
+  <text x="260" y="100" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="#ffffff">Media</text>
+  <text x="260" y="150" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="#ffffff">Blocker</text>
+  
+  <!-- Slider icon -->
+  <rect x="260" y="180" width="150" height="20" rx="10" fill="#ffffff" />
+  <circle cx="335" cy="190" r="15" fill="#4a90e2" stroke="#ffffff" stroke-width="5" />
+</svg>

@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Media Blocker",
+    "version": "1.0",
+    "description": "Blocks and blurs images and videos on specified sites with full control.",
+    "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+    "background": {
+    "service_worker": "background.js"
+  },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js","slider.js"],
+        "css": ["styles.css","buttonsStyle.css"] 
+      },
+      {
+        "matches": ["<all_urls>"],
+        "js": ["immediateEffect.js"],
+        "run_at": "document_start"
+      }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+  
+}
