@@ -5,6 +5,7 @@ let myTransparency = 0;
 function blockMedia() {
   const mediaElements = [...document.getElementsByTagName('img'), ...document.getElementsByTagName('video')];
   mediaElements.forEach(element => {
+      element.style.transition = 'none';
       element.style.filter = `blur(${myMaxBlur}px)`;
       element.style.opacity = (100 - myTransparency) / 100;
       if (element.tagName === 'VIDEO') {
@@ -21,9 +22,13 @@ function unblockAllMedia() {
   const mediaElements = [...document.getElementsByTagName('img'), ...document.getElementsByTagName('video')];
   const overlays = document.getElementsByClassName('blur-overlay');
   
-  mediaElements.forEach(element => {
+  mediaElements.forEach((element, index) => {
+    element.style.transition = 'all 0.5s ease';
+    
+    setTimeout(() => {
       element.style.filter = 'none';
       element.style.opacity = '1';
+    }, index * 100);
   });
   
   Array.from(overlays).forEach(overlay => overlay.remove());

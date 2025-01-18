@@ -77,33 +77,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   toggleSiteButton.addEventListener('click', () => {
-    showConfirmationDialog((confirmed) => {
-      if (confirmed) {
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-          const currentUrl = new URL(tabs[0].url);
-          const currentHost = currentUrl.hostname;
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      const currentUrl = new URL(tabs[0].url);
+      const currentHost = currentUrl.hostname;
 
-          chrome.storage.local.get(['allowedSites'], (data) => {
-            let allowedSites = data.allowedSites || [];
-            const index = allowedSites.indexOf(currentHost);
-
-            if (index > -1) {
-              allowedSites.splice(index, 1);
-              toggleSiteButton.classList.remove('btn');
-              toggleSiteButton.classList.add('btnoff');
-            } else {
+      chrome.storage.local.get(['allowedSites'], (data) => {
+        let allowedSites = data.allowedSites || [];
+        const index = allowedSites.indexOf(currentHost);
+        
+        // If site is blocked (going to allow it), show confirmation
+        if (index === -1) {
+          showConfirmationDialog((confirmed) => {
+            if (confirmed) {
               allowedSites.push(currentHost);
               toggleSiteButton.classList.add('btn');
               toggleSiteButton.classList.remove('btnoff');
+              
+              chrome.storage.local.set({allowedSites}, () => {
+                updateUI();
+                chrome.tabs.sendMessage(tabs[0].id, { action: "updateBlocking" });
+              });
             }
-            
-            chrome.storage.local.set({allowedSites}, () => {
-              updateUI();
-              chrome.tabs.sendMessage(tabs[0].id, { action: "updateBlocking" });
-            });
           });
-        });
-      }
+        } else {
+          // If site is allowed (going to block it), do it immediately
+          allowedSites.splice(index, 1);
+          toggleSiteButton.classList.remove('btn');
+          toggleSiteButton.classList.add('btnoff');
+          
+          chrome.storage.local.set({allowedSites}, () => {
+            updateUI();
+            chrome.tabs.sendMessage(tabs[0].id, { action: "updateBlocking" });
+          });
+        }
+      });
     });
   });
   updateUI();
