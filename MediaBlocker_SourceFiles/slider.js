@@ -27,14 +27,24 @@ function createSlider(element) {
 }
 
 function addOrShowSlider(element) {
-  let slider = sliders.get(element);
-  if (!slider) {
-    slider = createSlider(element);
-    sliders.set(element, slider);
-    document.body.appendChild(slider);
-  }
-  positionSlider(slider, element);
-  fadeInSlider(slider);
+  chrome.storage.local.get(['allowedSites'], (data) => {
+    const currentHost = window.location.hostname;
+    const allowedSites = data.allowedSites || [];
+    
+    // Don't show slider if site is allowed
+    if (allowedSites.includes(currentHost)) {
+      return;
+    }
+
+    let slider = sliders.get(element);
+    if (!slider) {
+      slider = createSlider(element);
+      sliders.set(element, slider);
+      document.body.appendChild(slider);
+    }
+    positionSlider(slider, element);
+    fadeInSlider(slider);
+  });
 }
 
 function positionSlider(slider, element) {

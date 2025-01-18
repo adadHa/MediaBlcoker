@@ -36,29 +36,74 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function showConfirmationDialog(callback) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirmation-overlay';
+    
+    const dialog = document.createElement('div');
+    dialog.className = 'confirmation-dialog';
+    
+    const message = document.createElement('p');
+    message.textContent = 'Are you sure you want to change the blocking status for this site?';
+    message.style.color = 'var(--lightText)';
+    
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'confirmation-buttons';
+    
+    const confirmButton = document.createElement('button');
+    confirmButton.className = 'confirm-btn';
+    confirmButton.textContent = 'Confirm';
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'cancel-btn';
+    cancelButton.textContent = 'Cancel';
+    
+    buttonsContainer.appendChild(confirmButton);
+    buttonsContainer.appendChild(cancelButton);
+    dialog.appendChild(message);
+    dialog.appendChild(buttonsContainer);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    confirmButton.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      callback(true);
+    });
+    
+    cancelButton.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      callback(false);
+    });
+  }
+
   toggleSiteButton.addEventListener('click', () => {
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-      const currentUrl = new URL(tabs[0].url);
-      const currentHost = currentUrl.hostname;
+    showConfirmationDialog((confirmed) => {
+      if (confirmed) {
+        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+          const currentUrl = new URL(tabs[0].url);
+          const currentHost = currentUrl.hostname;
 
-      chrome.storage.local.get(['allowedSites'], (data) => {
-        let allowedSites = data.allowedSites || [];
-        const index = allowedSites.indexOf(currentHost);
+          chrome.storage.local.get(['allowedSites'], (data) => {
+            let allowedSites = data.allowedSites || [];
+            const index = allowedSites.indexOf(currentHost);
 
-        if (index > -1) {
-          allowedSites.splice(index, 1);
-          toggleSiteButton.classList.remove('btn');
-          toggleSiteButton.classList.add('btnoff');
-        } else {
-          allowedSites.push(currentHost);
-          toggleSiteButton.classList.add('btn');
-          toggleSiteButton.classList.remove('btnoff');
-        }
-          chrome.storage.local.set({allowedSites}, () => {
-          updateUI();
-          chrome.tabs.sendMessage(tabs[0].id, { action: "updateBlocking" });
+            if (index > -1) {
+              allowedSites.splice(index, 1);
+              toggleSiteButton.classList.remove('btn');
+              toggleSiteButton.classList.add('btnoff');
+            } else {
+              allowedSites.push(currentHost);
+              toggleSiteButton.classList.add('btn');
+              toggleSiteButton.classList.remove('btnoff');
+            }
+            
+            chrome.storage.local.set({allowedSites}, () => {
+              updateUI();
+              chrome.tabs.sendMessage(tabs[0].id, { action: "updateBlocking" });
+            });
+          });
         });
-      });
+      }
     });
   });
   updateUI();
