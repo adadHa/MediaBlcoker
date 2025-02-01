@@ -17,13 +17,13 @@
     "<all_urls>"
   ],
     "background": {
-    "service_worker": "background.js"
+    "service_worker": "service-worker.js"
   },
     "content_scripts": [
       {
         "matches": ["<all_urls>"],
-        "js": ["content.js","slider.js"],
-        "css": ["styles.css","buttonsStyle.css"] 
+        "js": ["content.js", "slider.js", "detector.js", "contentAI.js"],
+        "css": ["styles.css", "buttonsStyle.css"]
       },
       {
         "matches": ["<all_urls>"],
@@ -39,6 +39,11 @@
             "48": "icon1.1_48px.png",
             "128": "icon1.1_128px.png"
         }
-    }
+    },
+    "web_accessible_resources": [{
+    "resources": ["worker.js"],
+    "matches": ["<all_urls>"]
+  }]
+    
   
 }

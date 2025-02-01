@@ -1,3 +1,4 @@
+// Background functionality
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({ allowedSites: [] });
 });
@@ -12,4 +13,3 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.runtime.onStartup.addListener(() => {
   chrome.storage.local.set({ allowedSites: [] });
 });
-
