@@ -2,62 +2,107 @@ let isBlocking = true;
 let myMaxBlur = 0;
 let myTransparency = 0;
 
+// Create a style element for dynamic content
+const dynamicStyleElement = document.createElement('style');
+document.head.appendChild(dynamicStyleElement);
+
+function updateDynamicStyles() {
+    if (isBlocking) {
+        dynamicStyleElement.textContent = `
+            img, video, iframe {
+                filter: blur(20px) !important;
+                opacity: 0.1 !important;
+            }
+        `;
+    } else {
+        dynamicStyleElement.textContent = '';
+    }
+}
+
 function blockMedia() {
-  const mediaElements = [...document.getElementsByTagName('img'), ...document.getElementsByTagName('video')];
-  mediaElements.forEach(element => {
-      element.style.transition = 'none';
-      element.style.filter = `blur(${myMaxBlur}px)`;
-      element.style.opacity = (100 - myTransparency) / 100;
-      if (element.tagName === 'VIDEO') {
-        element.style.opacity = '0';
-      }
-  });
-  sliders.forEach(slider => {
-    slider.oninput({ target: slider, stopPropagation: () => {} });
-  });
-  //scanElementsAndPutSliders(mediaElements);
+    const mediaElements = [...document.getElementsByTagName('img'), 
+                         ...document.getElementsByTagName('video'),
+                         ...document.getElementsByTagName('iframe')];
+    mediaElements.forEach(element => {
+        element.style.transition = 'none';
+        // Remove !important from the inline styles to allow our custom settings
+        element.style.setProperty('filter', `blur(${myMaxBlur}px)`, '');
+        element.style.setProperty('opacity', `${(100 - myTransparency) / 100}`, '');
+        
+        if (element.tagName === 'VIDEO') {
+            element.style.setProperty('opacity', '0', '');
+        }
+    });
+    
+    // Update the dynamic styles to match current settings
+    if (isBlocking) {
+        dynamicStyleElement.textContent = `
+            img, video, iframe {
+                filter: blur(${myMaxBlur}px) !important;
+                opacity: ${(100 - myTransparency) / 100} !important;
+            }
+        `;
+    }
+    
+    sliders.forEach(slider => {
+        slider.oninput({ target: slider, stopPropagation: () => {} });
+    });
 }
 
 function unblockAllMedia() {
-  const mediaElements = [...document.getElementsByTagName('img'), ...document.getElementsByTagName('video')];
-  const overlays = document.getElementsByClassName('blur-overlay');
-  
-  mediaElements.forEach((element, index) => {
-    element.style.transition = 'all 0.5s ease';
+    dynamicStyleElement.textContent = '';
+    const mediaElements = [...document.getElementsByTagName('img'), 
+                         ...document.getElementsByTagName('video'),
+                         ...document.getElementsByTagName('iframe')];
     
-    setTimeout(() => {
-      element.style.filter = 'none';
-      element.style.opacity = '1';
-    }, index * 100);
-  });
-  
-  Array.from(overlays).forEach(overlay => overlay.remove());
+    mediaElements.forEach((element, index) => {
+        element.style.transition = 'all 0.5s ease';
+        
+        setTimeout(() => {
+            element.style.setProperty('filter', 'none', '');
+            element.style.setProperty('opacity', '1', '');
+        }, index * 100);
+    });
 }
 
 function checkSiteAndBlock() {
-  console.log('Checking site...');
-  chrome.storage.local.get(['allowedSites'], (data) => {
-    console.log('Got allowed sites:', data.allowedSites);
-    const currentHost = window.location.hostname;
-    const allowedSites = data.allowedSites || [];
+    console.log('Checking site...');
+    chrome.storage.local.get(['allowedSites'], (data) => {
+        console.log('Got allowed sites:', data.allowedSites);
+        const currentHost = window.location.hostname;
+        const allowedSites = data.allowedSites || [];
 
-    if (allowedSites.includes(currentHost)) {
-      console.log('Unblocking media...');
-      unblockAllMedia();
-      isBlocking = false;
-    } else {
-      console.log('Blocking media...');
-      blockMedia();
-      isBlocking = true;
-    }
-    console.log('Finished checking site');
-  });
+        if (allowedSites.includes(currentHost)) {
+            console.log('Unblocking media...');
+            isBlocking = false;
+            updateDynamicStyles();
+            unblockAllMedia();
+        } else {
+            console.log('Blocking media...');
+            isBlocking = true;
+            updateDynamicStyles();
+            blockMedia();
+        }
+        console.log('Finished checking site');
+    });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "updateBlocking") {
-    checkSiteAndBlock();
-  }
+    if (request.blur !== undefined) {
+        myMaxBlur = request.blur;
+        if (isBlocking) {
+            blockMedia(); // Update blocking with new settings
+        }
+    }
+    if (request.transparency !== undefined) {
+        myTransparency = request.transparency;
+        if (isBlocking) {
+            blockMedia(); // Update blocking with new settings
+        }
+    }
+    if (request.action === "updateBlocking") {
+        checkSiteAndBlock();
+    }
 });
 
 function isRelevantMutation(mutations) {
@@ -107,18 +152,12 @@ const observer = new MutationObserver((mutations) => {
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.blur !== undefined) myMaxBlur = request.blur;
-  if (request.transparency !== undefined) myTransparency = request.transparency;
-  checkSiteAndBlock();
-});
-
-
+// Initialize dynamic styles
+updateDynamicStyles();
 
 // Load initial settings and block
 chrome.storage.sync.get(['blur', 'transparency'], (result) => {
-  myMaxBlur = result.blur || 0;
-  myTransparency = result.transparency || 0;
-  checkSiteAndBlock();
-  setTimeout(() => {styleElement.disabled = true;}, 100);
+    myMaxBlur = result.blur || 0;
+    myTransparency = result.transparency || 0;
+    checkSiteAndBlock();
 });
